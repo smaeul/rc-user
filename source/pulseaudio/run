@@ -1,0 +1,13 @@
+#!/bin/execlineb -P
+importas XDG_RUNTIME_DIR XDG_RUNTIME_DIR
+s6-envdir -fi ${XDG_RUNTIME_DIR}/env
+background -d {
+  fdmove 1 3
+  loopwhilex -x 0
+  if { sleep 1 }
+  s6-ipcclient -Q ${XDG_RUNTIME_DIR}/pulse/native
+  echo
+}
+unexport !
+fdclose 3
+pulseaudio --daemonize=no --exit-idle-time=-1 --log-target=stderr --use-pid-file=yes
