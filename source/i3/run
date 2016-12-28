@@ -1,0 +1,8 @@
+#!/bin/execlineb -P
+multisubstitute {
+  importas HOME HOME
+  importas XDG_RUNTIME_DIR XDG_RUNTIME_DIR
+}
+s6-envdir -fi ${XDG_RUNTIME_DIR}/env
+cd ${HOME}
+i3
