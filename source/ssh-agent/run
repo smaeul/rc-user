@@ -1,0 +1,6 @@
+#!/bin/execlineb -P
+importas XDG_RUNTIME_DIR XDG_RUNTIME_DIR
+s6-envdir -fi ${XDG_RUNTIME_DIR}/env
+importas SSH_AUTH_SOCK SSH_AUTH_SOCK
+redirfd -w 1 /dev/null
+ssh-agent -a ${SSH_AUTH_SOCK} -Ds
