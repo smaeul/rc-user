@@ -1,0 +1,66 @@
+#!/bin/sh -eu
+# s6-rc preprocessor and updater frontend
+# Copyright © 2016 Samuel Holland <samuel@sholland.org>
+# See LICENSE in the project directory for license terms.
+# vim: expandtab:sts=2:sw=2:ts=8:tw=110
+#
+
+base=${XDG_CONFIG_HOME}/rc
+date=$(TZ=UTC0 date +%Y%m%dT%H%M%SZ)
+tmpdir=$(mktemp -d)
+trap 'rm -rf "$tmpdir"' HUP INT QUIT TERM
+
+for svcdir in "$base"/source/* ; do
+  if test -r "$svcdir"/disabled ; then
+    continue
+  elif test -r "$svcdir"/instances ; then
+    svcname=${svcdir##*/}
+    outdir=${tmpdir}/${svcname}
+
+    mkdir "$outdir"
+    printf 'bundle\n' > "$outdir"/type
+    sed -e "s/^/${svcname}@/" -e "s@/@-@g" "$svcdir"/instances > "$outdir"/contents
+
+    while read -r instance ; do
+      outdir=${tmpdir}/${svcname}@$(echo "${instance}" | tr / -)
+
+      cp -pR "$svcdir" "$outdir"
+      find "$outdir" -type f -exec sed -i "s@%I@${instance}@g" {} +
+    done < "$svcdir"/instances
+  else
+    cp -pR "$svcdir" "$tmpdir"
+  fi
+done
+
+for svcdir in "$tmpdir"/* ; do
+  if test -r "$svcdir"/logdir ; then
+    svcname=${svcdir##*/}
+    logname="${svcname}-logger"
+    outdir=${tmpdir}/${logname}
+    logdir=/var/log/$(cat "$svcdir"/logdir)
+
+    mkdir "$outdir"
+    printf '%s\n' "$logname" > "${svcdir}/producer-for"
+    printf '%s\n' "$svcname" > "${outdir}/consumer-for"
+    printf 'filesystems\n' > "$outdir"/dependencies
+    cat > "$outdir"/run << EOF
+#!/bin/execlineb -P
+if { install -dg log -m 0750 -o log ${logdir} }
+umask 027
+s6-setuidgid log
+s6-log !lzip t ${logdir}
+EOF
+    chmod +x "$outdir"/run
+    printf 'longrun\n' > "$outdir"/type
+  fi
+done
+
+if s6-rc-compile -u $(id -u) -g $(id -g) -h nobody "${base}/compiled.${date}" "$tmpdir"; then
+  if test -d "${base}/compiled" ; then
+    s6-rc-update -l "${XDG_RUNTIME_DIR}/rc" "${base}/compiled.${date}"
+  fi
+  rm -rf "${base}/compiled"
+  ln -fns "compiled.${date}" "${base}/compiled"
+fi
+
+rm -rf "$tmpdir"
