@@ -1,0 +1,56 @@
+#!/bin/sh -eu
+#
+# Copyright © 2016 Samuel Holland <samuel@sholland.org>
+# See LICENSE in the project directory for license terms.
+# vim: expandtab:sts=2:sw=2:ts=8:tw=100
+#
+
+outdir=${1:-${XDG_RUNTIME_DIR}/env}
+
+envvar() {
+  export "${1}=${2}"
+  printf '%s'  "$2" > "${outdir}/${1}"
+}
+
+# required variables (must be set first)
+LOGNAME=${LOGNAME:-${USER}}
+LOGNAME=${LOGNAME:-$(id -un)}
+PATH=${PATH:-/usr/local/bin:/usr/local/sbin:/bin:/sbin:/usr/bin:/usr/sbin}
+
+# POSIX variables
+# see http://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap08.html#tag_08_03
+envvar HOME             "${HOME:-/home/${LOGNAME}}"
+envvar LOGNAME          "${LOGNAME}"
+envvar PATH             "${HOME}/.local/bin:${PATH}"
+envvar SHELL            "${SHELL:-$(getent passwd  "$LOGNAME" | cut -d: -f7)}"
+
+# XDG path variables
+# see https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html
+envvar XDG_CACHE_HOME   "${XDG_CACHE_HOME:-${HOME}/.cache}"
+envvar XDG_CONFIG_HOME  "${XDG_CONFIG_HOME:-${HOME}/.config}"
+envvar XDG_DATA_HOME    "${XDG_DATA_HOME:-${HOME}/.local/share}"
+envvar XDG_RUNTIME_DIR  "${XDG_RUNTIME_DIR:-/run/user/${LOGNAME}}"
+
+# XDG system path variable
+# see https://standards.freedesktop.org/icon-theme-spec/icon-theme-spec-latest.html
+envvar XDG_DATA_DIRS    "${XDG_DATA_HOME}:${XDG_DATA_DIRS:-/usr/local/share:/usr/share}"
+
+# other variables
+envvar EDITOR           "vim"
+envvar GIMP2_DIRECTORY  "${XDG_CONFIG_HOME}/gimp"
+envvar GOBIN            "${HOME}/.local/bin"
+envvar GOPATH           "${HOME}/.local/lib/go"
+envvar GTK2_RC_FILES    "${XDG_CONFIG_HOME}/gtk-2.0/gtkrc"
+envvar I3SOCK           "${XDG_RUNTIME_DIR}/i3/socket"
+envvar LANG             "en_US.UTF-8"
+envvar LC_COLLATE       "C"
+envvar LESS             "-R -M"
+envvar LESSHISTFILE     "${XDG_CACHE_HOME}/history/less"
+envvar LESSOPEN         ""
+envvar MAKEFLAGS        "-j$(($(getconf _NPROCESSORS_ONLN)+1)) --no-print-directory"
+envvar MPD_HOST         "${XDG_RUNTIME_DIR}/mpd"
+envvar PAGER            "less"
+envvar RXVT_SOCKET      "${XDG_RUNTIME_DIR}/urxvtd"
+envvar SSH_AUTH_SOCK    "${XDG_RUNTIME_DIR}/ssh-agent"
+envvar TMUX_TMPDIR      "${XDG_RUNTIME_DIR}"
+envvar WEECHAT_HOME     "${XDG_CONFIG_HOME}/weechat"
