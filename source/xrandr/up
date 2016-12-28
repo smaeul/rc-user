@@ -1,0 +1,4 @@
+importas XDG_RUNTIME_DIR XDG_RUNTIME_DIR
+s6-envdir -fi ${XDG_RUNTIME_DIR}/env
+if -t { grep -Fq indium /proc/sys/kernel/hostname }
+xrandr --dpi 108
