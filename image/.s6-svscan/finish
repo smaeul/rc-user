@@ -1,0 +1,5 @@
+#!/bin/execlineb -P
+backtick pids { cat /proc/thread-self/children }
+importas -su pids pids
+foreground { kill -TERM 0 ${pids} }
+wait -t 2000 { }
