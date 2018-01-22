@@ -55,7 +55,7 @@ EOF
   fi
 done
 
-if s6-rc-compile -u $(id -u) -g $(id -g) -h nobody "${base}/compiled.${date}" "$tmpdir"; then
+if s6-rc-compile -u $(id -u) -g $(id -g) "${base}/compiled.${date}" "$tmpdir"; then
   if test -d "${base}/compiled" ; then
     s6-rc-update -l "${XDG_RUNTIME_DIR}/rc" "${base}/compiled.${date}"
   fi
